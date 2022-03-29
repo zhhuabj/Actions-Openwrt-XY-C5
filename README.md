@@ -11,8 +11,12 @@
 sudo apt-get -y install subversion libncurses5-dev git git-core build-essential unzip bzip2 python2.7
 git clone https://github.com/coolsnowwolf/lede
 cd lede
-sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
-./scripts/feeds update -a && ./scripts/feeds install -a
+echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages' >> feeds.conf.default
+echo 'src-git small https://github.com/kenzok8/small' >> feeds.conf.default
+make clean
+./scripts/feeds clean
+./scripts/feeds update -a
+./scripts/feeds install -a -f
 # first using the existing XY-C1.config
 wget https://raw.githubusercontent.com/zhhuabj/Actions-Openwrt-XY-C5/main/XY-C1.config -O .config
 # then enable ext4 storage and usb wifi
@@ -48,15 +52,42 @@ make defconfig
 ```
 注：.config里有passwall的配置,但运行make defconfig之后这些配置又没有了,那是因为passwall的代码没clone下来
 ```
-cd lede/package
-git clone https://github.com/kenzok8/openwrt-packages.git
-git clone https://github.com/kenzok8/small.git
-cd ../ && ./scripts/feeds update -a && ./scripts/feeds install -a
+#cd lede/package
+#git clone https://github.com/kenzok8/openwrt-packages.git
+#git clone https://github.com/kenzok8/small.git
+echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages' >> feeds.conf.default
+echo 'src-git small https://github.com/kenzok8/small' >> feeds.conf.default
+/scripts/feeds update -a && ./scripts/feeds install -a
+
+CONFIG_PACKAGE_luci-app-passwall=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Server=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Server=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_GO=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Brook=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_NaiveProxy=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_kcptun=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_haproxy=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ChinaDNS_NG=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_dns2socks=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_v2ray-plugin=n
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_simple-obfs=n
 
 # make sure ssr and passwall configurations exist in .config, then run
 make package/openwrt-packages/luci-app-passwall2/compile V=s
 make package/openwrt-packages/luci-app-ssr-plus/compile V=99
 ls bin/packages/mipsel_24kc/base/luci-app-ssr-plus_185-2_all.ipk
+```
+注: samb4-libs的体积过大有17M多，这样编译出来会大于小娱32M的限制，所以改成nfs
+```
+CONFIG_PACKAGE_kmod-fs-nfs=y
+CONFIG_PACKAGE_kmod-fs-nfs-common=y
+CONFIG_PACKAGE_kmod-fs-nfs-common-rpcsec=y
+CONFIG_PACKAGE_kmod-fs-nfs-v4=y
+CONFIG_PACKAGE_kmod-fs-nfsd=y
 ```
 参考: https://jarviswwong.com/compile-ipk-separately-with-openwrt.html
 
