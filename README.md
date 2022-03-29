@@ -58,4 +58,5 @@ make package/openwrt-packages/luci-app-passwall2/compile V=s
 make package/openwrt-packages/luci-app-ssr-plus/compile V=99
 ls bin/packages/mipsel_24kc/base/luci-app-ssr-plus_185-2_all.ipk
 ```
+参考: https://jarviswwong.com/compile-ipk-separately-with-openwrt.html
 
