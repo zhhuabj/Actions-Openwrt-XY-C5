@@ -34,6 +34,9 @@ CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
 CONFIG_PACKAGE_kmod-usb-net-rndis=y
 CONFIG_PACKAGE_usb-modeswitch=y
 CONFIG_PACKAGE_usbutils=y
+CONFIG_PACKAGE_kmod-usb-xhci-hcd=y
+CONFIG_PACKAGE_kmod-usb-xhci-mtk=y
+CONFIG_PACKAGE_kmod-usb3=y
 EOF
 make defconfig
 # final expand some new packages like openssh-server, vim, etc
@@ -43,3 +46,16 @@ make defconfig
 #make -j8 download V=s
 #make -j1 V=s
 ```
+注：.config里有passwall的配置,但运行make defconfig之后这些配置又没有了,那是因为passwall的代码没clone下来
+```
+cd lede/package
+git clone https://github.com/kenzok8/openwrt-packages.git
+git clone https://github.com/kenzok8/small.git
+cd ../ && ./scripts/feeds update -a && ./scripts/feeds install -a
+
+# make sure ssr and passwall configurations exist in .config, then run
+make package/openwrt-packages/luci-app-passwall2/compile V=s
+make package/openwrt-packages/luci-app-ssr-plus/compile V=99
+ls bin/packages/mipsel_24kc/base/luci-app-ssr-plus_185-2_all.ipk
+```
+
