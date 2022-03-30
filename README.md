@@ -6,89 +6,44 @@
  - 在　https://github.com/zhhuabj/openwrt_xiaoyuc5/actions/workflows/build-openwrt.yml　中点击"Actions"开始编译
  - 注：这里实际使用的不是P3TERX, 而是https://github.com/Ljzkirito/Actions-Openwrt-XY-C5 , 所以也不叫xiaoyuc5
 
-## 附件 - 本地生成.config (也就是seed.config)
+## 附件 - 本地编译＆如何生成.config
+
 ```
-sudo apt-get -y install subversion libncurses5-dev git git-core build-essential unzip bzip2 python2.7
-git clone https://github.com/coolsnowwolf/lede
+1, 准备lede源码，及安装相关依赖包(ubuntu 20.04上编译)
+
+sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl swig rsync -y
+proxychains4 git clone https://github.com/coolsnowwolf/lede
 cd lede
-#echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages' >> feeds.conf.default
-#echo 'src-git small https://github.com/kenzok8/small' >> feeds.conf.default
-echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall'  >> feeds.conf.default
-make clean
-./scripts/feeds clean
-./scripts/feeds update -a
-./scripts/feeds install -a -f
-# first using the existing XY-C1.config
-wget https://raw.githubusercontent.com/zhhuabj/Actions-Openwrt-XY-C5/main/XY-C1.config -O .config
-# then enable ext4 storage and usb wifi
-cat << EOF | tee -a .config
-CONFIG_PACKAGE_kmod-usb-core=y
-CONFIG_PACKAGE_kmod-usb-ohci=y
-CONFIG_PACKAGE_kmod-usb-uhci=y
-CONFIG_PACKAGE_kmod-usb-storage=y
-CONFIG_PACKAGE_kmod-usb-storage-extras=y
-CONFIG_PACKAGE_kmod-usb2=y
-CONFIG_PACKAGE_kmod-scsi-core=y
-CONFIG_PACKAGE_block-mount=y
-CONFIG_PACKAGE_libmount=y
-CONFIG_BUSYBOX_CONFIG_MOUNT=y
-CONFIG_PACKAGE_kmod-fs-ext4=y
-CONFIG_PACKAGE_e2fsprogs=y
-CONFIG_PACKAGE_kmod-usb-net=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
-CONFIG_PACKAGE_kmod-usb-net-rndis=y
-CONFIG_PACKAGE_usb-modeswitch=y
-CONFIG_PACKAGE_usbutils=y
-CONFIG_PACKAGE_kmod-usb-xhci-hcd=y
-CONFIG_PACKAGE_kmod-usb-xhci-mtk=y
-CONFIG_PACKAGE_kmod-usb3=y
-EOF
+
+2, 添加helloworld与passwall的feed, 但这样做之后在make menconfig时找不着passwall的选项(https://www.right.com.cn/FORUM/thread-8201742-1-1.html), 能看到ssr的
+# need to run 'make clean && ./scripts/feeds clean' after changing the feed source
+sed -i '$a src-git helloworld https://github.com/fw876/helloworld' feeds.conf.default
+sed -i '$a src-git passwall https://github.com/xiaorouji/openwrt-passwall' feeds.conf.default
+proxychains4 ./scripts/feeds update -a
+proxychains4 ./scripts/feeds install -a
+ls package/feeds/passwall/
+
+3, 总是使用官方golang版本来避免xray&v2ray的编译错误
+pushd feeds/packages/lang
+rm -fr golang && svn co https://github.com/openwrt/packages/trunk/lang/golang
+popd
+
+4, 利用一些自定义config(包括IPv6(Extra packages -> ipv6helper: odhcp6c, odhcpd-ipv6only, luci-proto-ipv6, luci-proto-ppp), USB storage, USB wifi, NFSv4, OpenSSH, OpenVPN, tailscale, SSR等
+wget https://raw.githubusercontent.com/zhhuabj/Actions-Openwrt-XY-C5/main/seed.config_initial
+cp seed.config_initial .config
 make defconfig
-# final expand some new packages like openssh-server, vim, etc
+# yes '' | make oldconfig 
+# custom your others
 make menuconfig
-make defconfig
-./scripts/diffconfig.sh > seed.config
-#make -j8 download V=s
-#make -j1 V=s
-```
-注：.config里有passwall的配置,但运行make defconfig之后这些配置又没有了,那是因为passwall的代码没clone下来
-```
-#cd lede/package
-#git clone https://github.com/kenzok8/openwrt-packages.git
-#git clone https://github.com/kenzok8/small.git
-echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages' >> feeds.conf.default
-echo 'src-git small https://github.com/kenzok8/small' >> feeds.conf.default
-/scripts/feeds update -a && ./scripts/feeds install -a
 
-CONFIG_PACKAGE_luci-app-passwall=y
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks=y
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Server=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR=y
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Server=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=y
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_GO=y
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Brook=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_NaiveProxy=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_kcptun=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_haproxy=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ChinaDNS_NG=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_dns2socks=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_v2ray-plugin=n
-CONFIG_PACKAGE_luci-app-passwall_INCLUDE_simple-obfs=n
+5, 下载依赖
+proxychains4 make -j8 download V=s
+make -j1 V=s
+make -j$(($(nproc) + 1)) V=s
+make download -j$(($(nproc) + 1))
+find dl -size -1024c -exec ls -l {} \;
+find dl -size -1024c -exec rm -f {} \;
 
-# make sure ssr and passwall configurations exist in .config, then run
-make package/openwrt-packages/luci-app-passwall2/compile V=s
-make package/openwrt-packages/luci-app-ssr-plus/compile V=99
-ls bin/packages/mipsel_24kc/base/luci-app-ssr-plus_185-2_all.ipk
+6, 编译
+make -j$(nproc) || make -j1 V=s
 ```
-注: samb4-libs的体积过大有17M多，这样编译出来会大于小娱32M的限制，所以改成nfs
-```
-CONFIG_PACKAGE_kmod-fs-nfs=y
-CONFIG_PACKAGE_kmod-fs-nfs-common=y
-CONFIG_PACKAGE_kmod-fs-nfs-common-rpcsec=y
-CONFIG_PACKAGE_kmod-fs-nfs-v4=y
-CONFIG_PACKAGE_kmod-fs-nfsd=y
-```
-参考: https://jarviswwong.com/compile-ipk-separately-with-openwrt.html
-
