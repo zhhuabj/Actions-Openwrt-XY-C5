@@ -57,4 +57,18 @@ wget https://raw.githubusercontent.com/zhhuabj/Actions-Openwrt-XY-C5/main/seed.c
 make defconfig
 make -j1 V=s
 ```
+基于Lienol源码编译
+```
+sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf -y
+proxychains4 git clone https://github.com/Lienol/openwrt openwrt_lienol
+cd openwrt_lienol
+echo 'src-git me https://github.com/huchanghui123/Lienol-openwrt-packages-backup' >> feeds.conf.default
+sed -i '$a src-git passwall https://github.com/xiaorouji/openwrt-passwall' feeds.conf.default
+./scripts/feeds clean && proxychains4 ./scripts/feeds update -a && proxychains4 ./scripts/feeds install -a
+wget https://raw.githubusercontent.com/zhhuabj/Actions-Openwrt-XY-C5/main/seed.config_initial -O .config
+make defconfig
+# select 'LuCI -> Applications -> luci-app-shadowscoks-libev'
+make menuconfig
+proxychains4 make -j8 download v=s && make -j1 V=s
+```
 参考：　https://sspai.com/post/61463
