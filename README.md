@@ -47,4 +47,14 @@ find dl -size -1024c -exec rm -f {} \;
 6, 编译
 make -j$(nproc) || make -j1 V=s
 ```
+若是二次编译：
+```
+git pull
+rm -rf tmp/ && rm -rf .config
+./scripts/feeds clean
+./scripts/feeds update -a && ./scripts/feeds install -a
+wget https://raw.githubusercontent.com/zhhuabj/Actions-Openwrt-XY-C5/main/seed.config_initial -O .config
+make defconfig
+make -j1 V=s
+```
 参考：　https://sspai.com/post/61463
