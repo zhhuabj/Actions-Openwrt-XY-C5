@@ -47,3 +47,4 @@ find dl -size -1024c -exec rm -f {} \;
 6, 编译
 make -j$(nproc) || make -j1 V=s
 ```
+参考：　https://sspai.com/post/61463
