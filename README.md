@@ -43,7 +43,7 @@ echo 'CONFIG_PACKAGE_luci-app-samba4' >> .config
 grep -r 'samba' .config
 proxychains4 make package/network/services/samba4/compile V=s
 
-最后改为samba3.6
+最后改为samba3.6 - http://lixingcong.github.io/2017/11/25/lede-samba/
 CONFIG_SHADOW_PASSWORDS=y
 CONFIG_PACKAGE_luci-app-samba=y
 CONFIG_PACKAGE_samba36-server=y
